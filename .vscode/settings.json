@@ -1,6 +1,0 @@
-{
-    "python.pythonPath": "/mnt/c/Users/eniwo/Downloads/personal_workspace/electric_cct_project/circuit_recognizer/venv/bin/python3",
-    "python.linting.pylamaEnabled": false,
-    "python.linting.pylintEnabled": true,
-    "python.linting.enabled": true
-}
