@@ -1,0 +1,7 @@
+BScProjectFinalReport
+traindata.zip
+venv
+images
+__pycache__
+.vscode
+*.__pycache__
