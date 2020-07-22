@@ -26,15 +26,25 @@ class Netlist(object):
             line.strip().split(" ")[0] for line in self.netlist_lines if line[0].lower() == "i"
           ]
           self.resistors = [
-            line.split(" ")[0]
+            Resistor(line.split(" ")[0],
+            line.split(" ")[1],
+            line.split(" ")[2])
             for line in self.netlist_lines
             if line[0].lower() == "r"
           ]
           self.capacitors = [
-            line.split(" ")[0] for line in self.netlist_lines if line[0].lower() == "c"
+            Capacitor(line.split(" ")[0],
+            line.split(" ")[1],
+            line.split(" ")[2])
+            for line in self.netlist_lines
+            if line[0].lower() == "c"
           ]
           self.inductors = [
-            line.split(" ")[0] for line in self.netlist_lines if line[0].lower() == "l"
+            Capacitor(line.split(" ")[0],
+            line.split(" ")[1],
+            line.split(" ")[2])
+            for line in self.netlist_lines
+            if line[0].lower() == "l"
           ]
 
         except Exception as e:
