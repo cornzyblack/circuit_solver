@@ -43,8 +43,8 @@ class Netlist(object):
     
     @classmethod
     def load(cls, file_path: str):
-        obj = Netlist(file_path)
-        return obj
+        netlist_obj = Netlist(file_path)
+        return netlist_obj
 
     def __get_loop(self):
         pass
