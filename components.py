@@ -2,10 +2,29 @@ from typing import List
 from errors import NotALoopError
 import re
 
-PREFIX_LIST = {"p": 1e-12, "n": 1e-9, "µ": 1e-6, "k": 1e3, "M": 1e6, "G": 1e9, "T": 1e12, "Y": 1e24,
- "Z": 1e21, "E": 1e18, "P": 1e15, "m": 1e-6, "h": 1e2,
- "da": 1e1, "d": 1e-1, "c": 1e-2, "f": 1e-15, "a": 1e-8,
- "y": 1e-24, "z": 1e-21}
+PREFIX_LIST = {
+    "p": 1e-12,
+    "n": 1e-9,
+    "µ": 1e-6,
+    "k": 1e3,
+    "M": 1e6,
+    "G": 1e9,
+    "T": 1e12,
+    "Y": 1e24,
+    "Z": 1e21,
+    "E": 1e18,
+    "P": 1e15,
+    "m": 1e-6,
+    "h": 1e2,
+    "da": 1e1,
+    "d": 1e-1,
+    "c": 1e-2,
+    "f": 1e-15,
+    "a": 1e-8,
+    "y": 1e-24,
+    "z": 1e-21,
+}
+
 
 def convert_value(value):
     symbol = None
@@ -20,7 +39,9 @@ def convert_value(value):
 
         prefix_match = re.search(r"([pnµkMGTYZEPmhdadcfayz]{1})", value)
         prefix_value = 1 if prefix_match else prefix_match.group(1)
-        real_value = float(re.search(r"([\d]+\.*\d*)", value).group(1)) * PREFIX_LIST.get(prefix_match, 1)
+        real_value = float(
+            re.search(r"([\d]+\.*\d*)", value).group(1)
+        ) * PREFIX_LIST.get(prefix_match, 1)
     except Exception as e:
         print(e)
 
@@ -35,6 +56,7 @@ class Wire:
         node_start: the start node the wire is connected to
         node_end: the end node the wire is connected to
     """
+
     def __init__(self, node_start, node_end):
         self.value = 1
         self.node_start = node_start
@@ -43,14 +65,14 @@ class Wire:
     def __str__(self):
         print(f"This is a wire that connects node {self.node_a} and {self.node_b}")
 
-
     def prettify(self):
         return f"{self.node_start}------{self.node_end}"
 
+
 class BaseElement:
     """ The Base element class for all elements"""
-    pass
 
+    pass
 
 
 class LinearElement(BaseElement):
@@ -64,7 +86,10 @@ class LinearElement(BaseElement):
         prefix: the prefix of the value of the element (m -> milli, M -> Mega, ...)
         symbol: the symbol of the element (R -> Resistor, L -> Inductor,...)
     """
-    def __init__(self, value: str, node_start: str, node_end: str, symbol: str, element_tag: str):
+
+    def __init__(
+        self, value: str, node_start: str, node_end: str, symbol: str, element_tag: str
+    ):
         """ Initializes the Linearelement """
         self.value = value
         self.node_start = node_start
@@ -105,7 +130,6 @@ class LinearElement(BaseElement):
         """
         self.current = None
 
-
     def get_current(self) -> float:
         """Return the current through the element
 
@@ -117,30 +141,64 @@ class LinearElement(BaseElement):
     def prettify(self):
         return f"{self.node_start}----{self.tag} ({self.value})---- {self.node_end}"
 
-class Resistor(LinearElement):
 
-    def __init__(self, value,  node_start: str, node_end: str, symbol=  "Ω", element_tag="R"):
-        super.__init__(value=value, node_start=node_start, node_end=node_end, symbol=symbol, element_tag=element_tag)
+class Resistor(LinearElement):
+    def __init__(
+        self, value, node_start: str, node_end: str, symbol="Ω", element_tag="R"
+    ):
+        super.__init__(
+            value=value,
+            node_start=node_start,
+            node_end=node_end,
+            symbol=symbol,
+            element_tag=element_tag,
+        )
 
 
 class LinearInductor(LinearElement):
+    def __init__(
+        self, value, node_start: str, node_end: str, symbol="H", element_tag="L"
+    ):
+        super.__init__(
+            value=value,
+            node_start=node_start,
+            node_end=node_end,
+            symbol=symbol,
+            element_tag=element_tag,
+        )
 
-    def __init__(self, value,  node_start: str, node_end: str, symbol=  "H", element_tag="L"):
-        super.__init__(value=value, node_start=node_start, node_end=node_end, symbol=symbol, element_tag=element_tag)
 
 class LinearCapacitor(LinearElement):
-    def __init__(self, value,  node_start: str, node_end: str, symbol=  "F", element_tag="C"):
-        super.__init__(value=value, node_start=node_start, node_end=node_end, symbol=symbol, element_tag=element_tag)
+    def __init__(
+        self, value, node_start: str, node_end: str, symbol="F", element_tag="C"
+    ):
+        super.__init__(
+            value=value,
+            node_start=node_start,
+            node_end=node_end,
+            symbol=symbol,
+            element_tag=element_tag,
+        )
+
 
 class VoltageSource(BaseElement):
-    def __init__(self, value,  node_start: str, node_end: str, symbol=  "v", element_tag="V"):
-        super.__init__(value=value, node_start=node_start, node_end=node_end, symbol=symbol, element_tag=element_tag)
+    def __init__(
+        self, value, node_start: str, node_end: str, symbol="v", element_tag="V"
+    ):
+        super.__init__(
+            value=value,
+            node_start=node_start,
+            node_end=node_end,
+            symbol=symbol,
+            element_tag=element_tag,
+        )
+
 
 class Loop:
     """A complete Loop in an electric circuit
     """
 
-    def __init__(self, elements: List[BaseElement], unknown_tag = []):
+    def __init__(self, elements: List[BaseElement], unknown_tag=[]):
         if elements <= 1:
             raise NotALoppError("This is not a Loop")
 
