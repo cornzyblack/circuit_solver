@@ -14,34 +14,32 @@ class Netlist(object):
         self.is_parsed = True
 
         try:
-            with open(file_path, "r") as f:
-                temp_netlist = f.read()
-                self.netlist = re.sub(r"\s+", " ", temp_netlist)
-        except:
-            self.is_parsed = False
-            print("Issue parsing Netlist")
+          with open(file_path, "r") as f:
+              self.netlist_lines = f.readlines()
 
-        self.netlist_lines = self.netlist.split("\n")
+          self.elements = [line.strip().split(" ") for line in self.netlist_lines]
 
-        self.elements = [line.split(" ") for line in self.netlist_lines]
-
-        self.voltage_sources = [
-            line.split(" ")[0] for line in self.netlist_lines if line[0].lower() == "v"
-        ]
-        self.current_sources = [
-            line.split(" ")[0] for line in self.netlist_lines if line[0].lower() == "i"
-        ]
-        self.resistors = [
-            components.reline.split(" ")[0]
+          self.voltage_sources = [
+            line.strip().split(" ")[0] for line in self.netlist_lines if line[0].lower() == "v"
+          ]
+          self.current_sources = [
+            line.strip().split(" ")[0] for line in self.netlist_lines if line[0].lower() == "i"
+          ]
+          self.resistors = [
+            line.split(" ")[0]
             for line in self.netlist_lines
             if line[0].lower() == "r"
-        ]
-        self.capacitors = [
+          ]
+          self.capacitors = [
             line.split(" ")[0] for line in self.netlist_lines if line[0].lower() == "c"
-        ]
-        self.inductors = [
+          ]
+          self.inductors = [
             line.split(" ")[0] for line in self.netlist_lines if line[0].lower() == "l"
-        ]
+          ]
+
+        except Exception as e:
+            self.is_parsed = False
+            print(f"Issue parsing Netlist {e}")
     
     @classmethod
     def load(cls, file_path: str):
