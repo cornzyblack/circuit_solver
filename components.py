@@ -146,7 +146,7 @@ class Resistor(LinearElement):
     def __init__(
         self, value, node_start: str, node_end: str, symbol="Ω", element_tag="R"
     ):
-        super.__init__(
+        super().__init__(
             value=value,
             node_start=node_start,
             node_end=node_end,
@@ -159,7 +159,7 @@ class LinearInductor(LinearElement):
     def __init__(
         self, value, node_start: str, node_end: str, symbol="H", element_tag="L"
     ):
-        super.__init__(
+        super().__init__(
             value=value,
             node_start=node_start,
             node_end=node_end,
@@ -172,7 +172,7 @@ class LinearCapacitor(LinearElement):
     def __init__(
         self, value, node_start: str, node_end: str, symbol="F", element_tag="C"
     ):
-        super.__init__(
+        super().__init__(
             value=value,
             node_start=node_start,
             node_end=node_end,
@@ -185,7 +185,7 @@ class VoltageSource(BaseElement):
     def __init__(
         self, value, node_start: str, node_end: str, symbol="v", element_tag="V"
     ):
-        super.__init__(
+        super().__init__(
             value=value,
             node_start=node_start,
             node_end=node_end,
