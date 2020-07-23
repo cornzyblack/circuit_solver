@@ -1,0 +1,10 @@
+*.pdf
+*.zip
+venv
+images
+__pycache__
+.vscode
+*.__pycache__
+*.jpg
+*.png
+*.idea
