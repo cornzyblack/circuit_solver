@@ -53,20 +53,20 @@ class Wire:
 
     Attributes
         value: the value of the wire (which is always 1)
-        node_start: the start node the wire is connected to
-        node_end: the end node the wire is connected to
+        start_node: the start node the wire is connected to
+        end_node: the end node the wire is connected to
     """
 
-    def __init__(self, node_start, node_end):
+    def __init__(self, start_node, end_node):
         self.value = 1
-        self.node_start = node_start
-        self.node_end = node_end
+        self.start_node = start_node
+        self.end_node = end_node
 
     def __str__(self):
         print(f"This is a wire that connects node {self.node_a} and {self.node_b}")
 
     def prettify(self):
-        return f"{self.node_start}------{self.node_end}"
+        return f"{self.start_node}------{self.end_node}"
 
 
 class BaseElement:
@@ -80,28 +80,27 @@ class LinearElement(BaseElement):
 
     Attributes
         value: the value of the element
-        node_start: the start node where the element is connected to
-        node_end: the end node where the element is connected to
+        start_node: the start node where the element is connected to
+        end_node: the end node where the element is connected to
         tag: the name of the element in the circuit
         prefix: the prefix of the value of the element (m -> milli, M -> Mega, ...)
         symbol: the symbol of the element (R -> Resistor, L -> Inductor,...)
     """
 
     def __init__(
-        self, value: str, node_start: str, node_end: str, symbol: str, element_tag: str
+        self, value: str, start_node: str, end_node: int, symbol: int, element_tag: str
     ):
         """ Initializes the Linearelement """
         self.value = value
-        self.node_start = node_start
-        self.node_end = node_end
-        self.tag = element_tag + "_" + node_start + node_end
+        self.start_node, self.end_node = sorted((start_node, end_node))
+        self.tag = element_tag + "_" + str(start_node) + str(end_node)
         self.prefix = None
         self.voltage = None
         self.current = None
         self.symbol = symbol
 
     def __str__(self):
-        return f"{self.__class__.__name__} has a value of {self.value} {self.symbol} and starts at Node {self.node_start} and Node {self.node_end}"
+        return f"{self.__class__.__name__} has a value of {self.value} {self.symbol} and starts at Node {self.start_node} and Node {self.end_node}"
 
     def get_tag(self) -> str:
         return self.tag
@@ -139,17 +138,17 @@ class LinearElement(BaseElement):
         return self.current
 
     def prettify(self):
-        return f"{self.node_start}----{self.tag} ({self.value})---- {self.node_end}"
+        return f"{self.start_node}----{self.tag} ({self.value})---- {self.end_node}"
 
 
 class Resistor(LinearElement):
     def __init__(
-        self, value, node_start: str, node_end: str, symbol="Ω", element_tag="R"
+        self, value, start_node: str, end_node: str, symbol="Ω", element_tag="R"
     ):
         super().__init__(
             value=value,
-            node_start=node_start,
-            node_end=node_end,
+            start_node=start_node,
+            end_node=end_node,
             symbol=symbol,
             element_tag=element_tag,
         )
@@ -157,12 +156,12 @@ class Resistor(LinearElement):
 
 class LinearInductor(LinearElement):
     def __init__(
-        self, value, node_start: str, node_end: str, symbol="H", element_tag="L"
+        self, value, start_node: str, end_node: str, symbol="H", element_tag="L"
     ):
         super().__init__(
             value=value,
-            node_start=node_start,
-            node_end=node_end,
+            start_node=start_node,
+            end_node=end_node,
             symbol=symbol,
             element_tag=element_tag,
         )
@@ -170,12 +169,12 @@ class LinearInductor(LinearElement):
 
 class LinearCapacitor(LinearElement):
     def __init__(
-        self, value, node_start: str, node_end: str, symbol="F", element_tag="C"
+        self, value, start_node: str, end_node: str, symbol="F", element_tag="C"
     ):
         super().__init__(
             value=value,
-            node_start=node_start,
-            node_end=node_end,
+            start_node=start_node,
+            end_node=end_node,
             symbol=symbol,
             element_tag=element_tag,
         )
@@ -183,12 +182,12 @@ class LinearCapacitor(LinearElement):
 
 class VoltageSource(BaseElement):
     def __init__(
-        self, value, node_start: str, node_end: str, symbol="v", element_tag="V"
+        self, value, start_node: str, end_node: str, symbol="v", element_tag="V"
     ):
         super().__init__(
             value=value,
-            node_start=node_start,
-            node_end=node_end,
+            start_node=start_node,
+            end_node=end_node,
             symbol=symbol,
             element_tag=element_tag,
         )
