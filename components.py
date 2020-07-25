@@ -1,7 +1,6 @@
 from typing import List
 from errors import NotALoopError
 import re
-from pathlib import Path
 
 PREFIX_LIST = {
     "p": 1e-12,
@@ -28,25 +27,19 @@ PREFIX_LIST = {
 
 
 def convert_value(value):
-    symbol = None
     prefix_value = None
-    real_value = None
 
-    try:
-        value = re.sub(r"[,\s]+", "", value.strip())
-        symbol_match = re.search(r"([ΩvLf]{1})", value, re.IGNORECASE)
-        if symbol_match:
-            symbol = symbol_match.group(1)
-
-        prefix_match = re.search(r"([pnµkMGTYZEPmhdadcfayz]{1})", value)
-        prefix_value = 1 if prefix_match else prefix_match.group(1)
-        real_value = float(
-            re.search(r"([\d]+\.*\d*)", value).group(1)
-        ) * PREFIX_LIST.get(prefix_match, 1)
-    except Exception as e:
-        print(e)
-
-    return symbol, real_value
+    if type(value) is not float:
+        try:
+            value = re.sub(r"[,\s]+", "", value.strip())
+            prefix_match = re.search(r"([pnµkMGTYZEPmhdadcfayz]{1})", value)
+            prefix_value = prefix_match.group(1) if prefix_match else 1
+            value = float(
+                re.search(r"([\d]+\.*\d*)", value).group(1)
+            ) * PREFIX_LIST.get(prefix_match, 1)
+        except Exception as e:
+            print(e)
+    return value
 
 
 class Wire:
@@ -89,15 +82,16 @@ class LinearElement(BaseElement):
     """
 
     def __init__(
-        self, value: str, start_node: str, end_node: int, symbol: int, element_tag: str
+        self, value: Union[str, float], start_node: str, end_node: int, symbol: Optional[str], element_tag: str
     ):
         """ Initializes the Linearelement """
-        self.value = value
         self.start_node, self.end_node = sorted((start_node, end_node))
         self.tag = element_tag + "_" + str(start_node) + str(end_node)
         self.prefix = None
         self.voltage = None
         self.current = None
+
+        self.value = convert_value(value)
         self.symbol = symbol
 
     def __str__(self):
@@ -144,7 +138,7 @@ class LinearElement(BaseElement):
 
 class Resistor(LinearElement):
     def __init__(
-        self, value, start_node: str, end_node: str, symbol="Ω", element_tag="R"
+        self, value: str, start_node: str, end_node: str, symbol="Ω", element_tag="R"
     ):
         super().__init__(
             value=value,
@@ -154,10 +148,46 @@ class Resistor(LinearElement):
             element_tag=element_tag,
         )
 
+    def get_conductance(self):
+        return 1 / self.value
+
+    def __add__(self, series_resistor: Resistor) -> Resistor:
+        """
+        Args:
+            series_resistor (Resistor): The resistor in Series
+
+        Returns:
+            Resistor: A resistor with the equivalent Resistance of the combined
+            seried resistors
+        """
+        equivalent_resistance_value = self.value + series_resistor.value
+        equivalent_voltage = None
+        equivalent_current = self.current if self.voltage else series_resistor.current
+
+        return Resistor(value=equivalent_resistance_value, start_node=, end_node=)
+
+    def __div__(self, parallel_resistor: Resistor) -> Resistor:
+        """
+        Args:
+            parallel_resistor (Resistor): The resistor in Parallel
+
+        Returns:
+            Resistor: A resistor with the equivalent Resistance of the combined
+            parallel resistors
+        """
+        equivalent_resistance_value = 1 / (self.value + parallel_resistor.value)
+        equivalent_voltage = self.voltage if self.voltage else series_resistor.voltage
+        equivalent_current = None
+        return Resistor(
+            value=equivalent_resistance_value,
+            start_node=self.start_node,
+            end_node=self.end_node,
+        )
+
 
 class LinearInductor(LinearElement):
     def __init__(
-        self, value, start_node: str, end_node: str, symbol="H", element_tag="L"
+        self, value: str, start_node: str, end_node: str, symbol="H", element_tag="L"
     ):
         super().__init__(
             value=value,
@@ -170,7 +200,7 @@ class LinearInductor(LinearElement):
 
 class LinearCapacitor(LinearElement):
     def __init__(
-        self, value, start_node: str, end_node: str, symbol="F", element_tag="C"
+        self, value: str, start_node: str, end_node: str, symbol="F", element_tag="C"
     ):
         super().__init__(
             value=value,
@@ -181,9 +211,9 @@ class LinearCapacitor(LinearElement):
         )
 
 
-class VoltageSource(BaseElement):
+class VoltageSource(LinearElement):
     def __init__(
-        self, value, start_node: str, end_node: str, symbol="v", element_tag="V"
+        self, value: str, start_node: str, end_node: str, symbol="v", element_tag="V"
     ):
         super().__init__(
             value=value,
@@ -191,6 +221,33 @@ class VoltageSource(BaseElement):
             end_node=end_node,
             symbol=symbol,
             element_tag=element_tag,
+        )
+
+
+class CurrentSource(LinearElement):
+    def __init__(
+        self, value: str, start_node: str, end_node: str, symbol="A", element_tag="v"
+    ):
+        super().__init__(
+            value=value,
+            start_node=start_node,
+            end_node=end_node,
+            symbol=symbol,
+            element_tag=element_tag,
+        )
+
+
+class ParallelElements(LinearElement):
+    def __init__(self, elements: List[LinearElement]):
+        super().__init__(
+            value=None, start_node=None, end_node=None, symbol=None, element_tag=None,
+        )
+
+
+class SeriesElements(LinearElement):
+    def __init__(self, elements: List[LinearElement]):
+        super().__init__(
+            value=None, start_node=None, end_node=None, symbol=None, element_tag=None,
         )
 
 
