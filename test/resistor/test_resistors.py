@@ -24,11 +24,9 @@ class TestResistorComponent:
         assert resistor.tag == "R_02", "The tag for this resistor should be R_02"
         assert resistor.symbol == "Ω", "The resistor should have a Ω symbol"
 
-    def test_get_resistor_value_2(self):
+    def test_get_resistor_value_3(self):
         resistor = Resistor("10.5Ω", 5, 4)
         assert resistor.value == 10.5, "The resistance value should be 10.5"
-        assert resistor.tag == "R_45", "The tag for this resistor should be R_45"
-        assert resistor.symbol == "Ω", "The resistor should have a Ω symbol"
 
     def test_conductance(self):
         resistor = Resistor("2Ω", 5, 4)
