@@ -31,3 +31,9 @@ class TestResistorComponent:
     def test_conductance(self):
         resistor = Resistor("2Ω", 5, 4)
         assert resistor.get_conductance() == 0.5, "The conductance value should be 0.5"
+
+    def test_resistors_in_parallel(self):
+        pass
+
+    def test_resistors_in_series(self):
+        pass
