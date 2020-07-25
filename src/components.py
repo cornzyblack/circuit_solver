@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import List, Union
-import errors
+from src import errors
 import re
 import numpy as np
 
@@ -37,7 +37,7 @@ def convert_value(value):
             prefix_value = prefix_match.group(1) if prefix_match else 1
             value = float(
                 re.search(r"([\d]+\.*\d*)", value).group(1)
-            ) * PREFIX_LIST.get(prefix_match, 1)
+            ) * PREFIX_LIST.get(prefix_value, 1)
         except Exception as e:
             print(e)
     return value

@@ -4,7 +4,10 @@ venv
 images
 __pycache__
 .vscode
-*.__pycache__
+*__pycache__
 *.jpg
 *.png
 *.idea
+*.pyc
+.pytest_cache
+*pytest
