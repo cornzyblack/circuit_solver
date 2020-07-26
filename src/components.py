@@ -178,8 +178,8 @@ class Resistor(LinearElement):
             end_node=end_node,
             symbol=symbol,
             element_tag=element_tag,
-            voltage=None,
-            current=None,
+            voltage=voltage,
+            current=current,
         )
 
     def get_conductance(self):
@@ -207,6 +207,8 @@ class Resistor(LinearElement):
             value=equivalent_resistance_value,
             start_node=self.start_node,
             end_node=series_resistor.start_node,
+            voltage=equivalent_voltage,
+            current=equivalent_current,
         )
 
     def __truediv__(self, parallel_resistor: Resistor) -> Resistor:
@@ -233,6 +235,8 @@ class Resistor(LinearElement):
             value=equivalent_resistance_value,
             start_node=self.start_node,
             end_node=self.end_node,
+            voltage=equivalent_voltage,
+            current=equivalent_current,
         )
 
     def __floordiv__(self, parallel_resistor: Resistor) -> Resistor:
@@ -262,8 +266,8 @@ class LinearInductor(LinearElement):
             end_node=end_node,
             symbol=symbol,
             element_tag=element_tag,
-            voltage=None,
-            current=None,
+            voltage=voltage,
+            current=current,
         )
 
 
@@ -284,8 +288,8 @@ class LinearCapacitor(LinearElement):
             end_node=end_node,
             symbol=symbol,
             element_tag=element_tag,
-            voltage=None,
-            current=None,
+            voltage=voltage,
+            current=current,
         )
 
 
@@ -353,7 +357,6 @@ class SeriesResistors(Resistor):
         equivalent_resistance = accumulate(
             resistors, lambda resistor_0, resistor_1: resistor_0 + resistor_1
         )
-
         return equivalent_resistance
 
 
