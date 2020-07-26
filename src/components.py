@@ -5,6 +5,7 @@ from typing import List, Union
 from src import errors
 import re
 import numpy as np
+from itertools import accumulate
 
 PREFIX_LIST = {
     "p": 1e-12,
@@ -30,7 +31,15 @@ PREFIX_LIST = {
 }
 
 
-def convert_value(value):
+def convert_value(value: Union[str, float]) -> Union[float, int]:
+    """This converts a string value into a float equivalent
+
+    Args:
+        value Union[str, float]: The value of the equivalent element together with its prefix
+
+    Returns:
+        Union[float, int]: The converted value of the object
+    """
     prefix_value = None
     if not isinstance(value, Number):
         try:
@@ -215,7 +224,9 @@ class Resistor(LinearElement):
         ):
             raise errors.NotInParallel(self.tag, parallel_resistor.tag)
 
-        equivalent_resistance_value = 1 / (self.value + parallel_resistor.value)
+        equivalent_resistance_value = 1 / (
+            (1 / self.value) + (1 / parallel_resistor.value)
+        )
         equivalent_voltage = self.voltage if self.voltage else parallel_resistor.voltage
         equivalent_current = None
         return Resistor(
@@ -226,6 +237,12 @@ class Resistor(LinearElement):
 
     def __floordiv__(self, parallel_resistor: Resistor) -> Resistor:
         return self.__truediv__(parallel_resistor)
+
+    def __radd__(self, other_resistor):
+        if other_resistor == 0:
+            return self
+        else:
+            return self.__add__(other_resistor)
 
 
 class LinearInductor(LinearElement):
@@ -316,18 +333,52 @@ class CurrentSource(LinearElement):
         )
 
 
-class ParallelElements(LinearElement):
+class SeriesResistors(Resistor):
     def __init__(self, elements: List[LinearElement]):
-        super().__init__(
-            value=None, start_node=None, end_node=None, symbol=None, element_tag=None,
+        self.elements = elements
+        self.voltage = None
+        self.current = None
+        self.value = list(self.solve_series(elements))
+
+    @classmethod
+    def solve_series(cls, resistors: List[Resistor]) -> Resistor:
+        """
+        This calculates the equivalent resistance step by step of a List of Resistors in Series
+        Args:
+            resistors (List[Resistor]): A list of resistors
+
+        Returns:
+            Resistor: Returns a resistor with the equivalent combined resistance
+        """
+        equivalent_resistance = accumulate(
+            resistors, lambda resistor_0, resistor_1: resistor_0 + resistor_1
         )
 
+        return equivalent_resistance
 
-class SeriesElements(LinearElement):
+
+class ParallelResistors(Resistor):
     def __init__(self, elements: List[LinearElement]):
-        super().__init__(
-            value=None, start_node=None, end_node=None, symbol=None, element_tag=None,
+        self.elements = elements
+        self.voltage = None
+        self.current = None
+        self.value = list(self.solve_parallel(elements))
+
+    @classmethod
+    def solve_parallel(cls, resistors: List[Resistor]) -> Resistor:
+        """
+        This calculates the equivalent resistance step by step of a List of Resistors in Parallel
+        Args:
+            resistors (List[Resistor]): A list of resistors
+
+        Returns:
+            Resistor: Returns a resistor with the equivalent combined resistance
+        """
+        equivalent_resistance = accumulate(
+            resistors, lambda resistor_0, resistor_1: resistor_0 / resistor_1
         )
+
+        return equivalent_resistance
 
 
 class Loop:
