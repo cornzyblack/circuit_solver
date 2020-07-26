@@ -1,6 +1,6 @@
 from __future__ import annotations
 from __future__ import division
-
+from numbers import Number
 from typing import List, Union
 from src import errors
 import re
@@ -32,7 +32,7 @@ PREFIX_LIST = {
 
 def convert_value(value):
     prefix_value = None
-    if type(value) is not float:
+    if not isinstance(value, Number):
         try:
             value = re.sub(r"[,\s]+", "", value.strip())
             prefix_match = re.search(r"([pnµkMGTYZEPmhdadcfayz]{1})", value)
@@ -102,7 +102,7 @@ class LinearElement(BaseElement):
         if start_node == end_node:
             raise errors.SameNodeError()
 
-        self.start_node, self.end_node = sorted((start_node, end_node))
+        self.start_node, self.end_node = sorted((int(start_node), int(end_node)))
         self.tag = element_tag + "_" + str(self.start_node) + str(self.end_node)
         self.prefix = None
         self.voltage = voltage
