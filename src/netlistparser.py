@@ -104,17 +104,38 @@ class Netlist(object):
             + self._elements.get("l")
         )
 
-    def get_sources(self):
-        if self._netlist_lines:
-            return self.get_voltage_source() + self.get_current_source()
+    def get_sources(self) -> List:
+        """Returns the current sources and voltage sources found in the Netlist
 
-    def get_voltage_source(self):
+        Returns:
+            Optional[List]: A list of current and voltage sources
+        """
+        if self._netlist_lines:
+            return self.get_voltage_sources() + self.get_current_sources()
+
+    def get_voltage_sources(self):
+        """Returns a list of voltage sources found in the Netlist
+
+        Returns:
+            Optional[List]: A list of voltage sources
+        """
+
         return self._elements.get("v")
 
-    def get_current_source(self):
+    def get_current_sources(self):
+        """Returns a list of current sources found in the Netlist
+
+        Returns:
+            Optional[List]: A list of current sources
+        """
         return self._elements.get("i")
 
     def get_parallel_nodes(self):
+        """Returns a list of nodes in parallel found in the Netlist
+
+        Returns:
+            Optional[List]: A list of nodes in parallel
+        """
         element_nodes = [
             (element.start_node, element.end_node) for element in self.__get_branches()
         ]
@@ -125,10 +146,5 @@ class Netlist(object):
         self._parallel_element_nodes = [
             node for node, count in counted_connected_nodes.items() if count > 1
         ]
-
-        print(f"{distinct_element_nodes=}")
-        print(f"{self._series_element_nodes=}")
-        print(f"{counted_connected_nodes=}")
-        print(f"{self._parallel_element_nodes=}")
 
         return self._parallel_element_nodes
