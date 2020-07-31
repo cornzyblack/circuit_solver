@@ -32,11 +32,11 @@ class Netlist(object):
             with open(file_path, "r") as f:
                 self._netlist_lines = f.readlines()[1:-1]
 
-            self.voltage_sources = []
-            self.current_sources = []
-            self.resistors = []
-            self.capacitors = []
-            self.inductors = []
+            self.__voltage_sources = []
+            self.__current_sources = []
+            self.__resistors = []
+            self.__capacitors = []
+            self.__inductors = []
 
             for line in self._netlist_lines:
                 element_symbol = line[0].lower()
@@ -45,32 +45,32 @@ class Netlist(object):
                 value = line.split(" ")[-1].strip()
 
                 if element_symbol == "v":
-                    self.voltage_sources.append(
+                    self.__voltage_sources.append(
                         self.__supported_elements(element_symbol=element_symbol)(
                             start_node=start_node, end_node=end_node, value=value
                         )
                     )
 
                 if element_symbol == "i":
-                    self.current_sources.append(
+                    self.__current_sources.append(
                         self.__supported_elements(element_symbol=element_symbol)(
                             start_node=start_node, end_node=end_node, value=value,
                         )
                     )
                 if element_symbol == "r":
-                    self.resistors.append(
+                    self.__resistors.append(
                         self.__supported_elements(element_symbol=element_symbol)(
                             start_node=start_node, end_node=end_node, value=value,
                         )
                     )
                 if element_symbol == "c":
-                    self.capacitors.append(
+                    self.__capacitors.append(
                         self.__supported_elements(element_symbol=element_symbol)(
                             start_node=start_node, end_node=end_node, value=value,
                         )
                     )
                 if element_symbol == "l":
-                    self.inductors.append(
+                    self.__inductors.append(
                         self.__supported_elements(element_symbol=element_symbol)(
                             start_node=start_node, end_node=end_node, value=value,
                         )
@@ -129,22 +129,22 @@ class Netlist(object):
           List[LinearElement]: A list of the linear Elements discovered
       """
         return (
-            self.current_sources
-            + self.voltage_sources
-            + self.inductors
-            + self.capacitors
-            + self.resistors
+            self.__current_sources
+            + self.__voltage_sources
+            + self.__inductors
+            + self.__capacitors
+            + self.__resistors
         )
 
     def get_sources(self):
         if self._netlist_lines:
-            return self.voltage_sources + self.current_sources
+            return self.__voltage_sources + self.__current_sources
 
     def get_voltage_source(self):
-        return self.voltage_sources
+        return self.__voltage_sources
 
     def get_current_source(self):
-        return self.current_sources
+        return self.__current_sources
 
     def get_parallel_nodes(self):
         nodes_count = len(self.__get_branches())
