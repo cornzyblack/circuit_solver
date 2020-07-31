@@ -1,5 +1,12 @@
 from typing import List, Optional, Union
-from components import Resistor, LinearInductor, Loop, LinearCapacitor
+from components import (
+    Resistor,
+    LinearInductor,
+    Loop,
+    LinearCapacitor,
+    VoltageSource,
+    CurrentSource,
+)
 import re
 from pathlib import Path
 from collections import Counter
@@ -30,45 +37,40 @@ class Netlist(object):
             sel.capacitors = []
             self.inductors = []
             for line in self._netlist_lines:
-                if line[0].lower() == "v":
-                    self.voltage_sources.append(
-                        VoltageSource(
-                            line.split(" ")[-1].strip(),
-                            int(line.split(" ")[1].strip()),
-                            int(line.split(" ")[2].strip()),
-                        )
-                    )
-                if line[0].lower() == "i":
-                    self.current_sources.append(
-                        CurrentSource(
-                            line.split(" ")[-1].strip(),
-                            int(line.split(" ")[1].strip()),
-                            int(line.split(" ")[2].strip()),
-                        )
-                    )
-                if line[0].lower() == "r":
-                    self.resistors.append(
-                        Resistor(
-                            line.split(" ")[-1].strip(),
-                            int(line.split(" ")[1].strip()),
-                            int(line.split(" ")[2].strip()),
-                        )
-                    )
-                if line[0].lower() == "c":
-                    self.capacitors.append(
-                        Capacitor(
-                            line.split(" ")[-1].strip(),
-                            int(line.split(" ")[1].strip()),
-                            int(line.split(" ")[2].strip()),
-                        )
-                    )
-                if line[0].lower() == "l":
+                element_symbol = line[0].lower()
+                start_node = int(line.split(" ")[1].strip())
+                end_node = (int(line.split(" ")[2].strip()),)
+                value = line.split(" ")[-1].strip()
 
+                if element_symbol == "v":
+                    self.voltage_sources.append(
+                        self.__supported_elements(
+                            start_node=start_node, end_node=end_node, value=value
+                        )
+                    )
+
+                if element_symbol == "i":
+                    self.current_sources.append(
+                        self.__supported_elements(
+                            start_node=start_node, end_node=end_node, value=value
+                        )
+                    )
+                if element_symbol == "r":
+                    self.resistors.append(
+                        self.__supported_elements(
+                            start_node=start_node, end_node=end_node, value=value
+                        )
+                    )
+                if element_symbol == "c":
+                    self.capacitors.append(
+                        self.__supported_elements(
+                            start_node=start_node, end_node=end_node, value=value
+                        )
+                    )
+                if element_symbol == "l":
                     self.inductors.append(
-                        Capacitor(
-                            line.split(" ")[-1].strip(),
-                            int(line.split(" ")[1].strip()),
-                            int(line.split(" ")[2].strip()),
+                        self.__supported_elements(
+                            start_node=start_node, end_node=end_node, value=value
                         )
                     )
 
@@ -91,6 +93,41 @@ class Netlist(object):
 
         netlist_obj = Netlist(file_path)
         return netlist_obj
+
+    def __supported_elements(
+        self, element_symbol, value, start_node, end_node, voltage=None, current=None
+    ) -> LinearElement:
+        """Returns the currently supported elements
+
+        Parameters:
+          element_symbol (str): The symbol of the element
+          value (str): The value of the element
+          start_node (str): The start node of the element
+          end_node (str): The end node of the element
+          value (str): The voltage through the element
+          current (str): The current through the element
+
+        Returns:
+            LinearElement: the linear element representation
+        """
+        elements = {
+            "v": VoltageSource(
+                value, start_node, end_node, voltage=voltage, current=current
+            ),
+            "c": LinearCapacitor(
+                value, start_node, end_node, voltage=voltage, current=current
+            ),
+            "i": CurrentSource(
+                value, start_node, end_node, voltage=voltage, current=current
+            ),
+            "r": Resistor(
+                value, start_node, end_node, voltage=voltage, current=current
+            ),
+            "l": LinearInductor(
+                value, start_node, end_node, voltage=voltage, current=current
+            ),
+        }
+        return elements.get(element_symbol)
 
     def __get_loop(self):
         pass
