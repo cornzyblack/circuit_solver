@@ -1,5 +1,4 @@
 from __future__ import annotations
-from __future__ import division
 from numbers import Number
 from typing import List, Union
 from src import errors
