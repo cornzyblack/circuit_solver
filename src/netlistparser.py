@@ -32,11 +32,7 @@ class Netlist(object):
             with open(file_path, "r") as f:
                 self._netlist_lines = f.readlines()[1:-1]
 
-            self.__voltage_sources = []
-            self.__current_sources = []
-            self.__resistors = []
-            self.__capacitors = []
-            self.__inductors = []
+            self._elements = {"v": [], "l": [], "r": [], "i": [], "c": []}
 
             for line in self._netlist_lines:
                 element_symbol = line[0].lower()
@@ -44,40 +40,12 @@ class Netlist(object):
                 end_node = int(line.split(" ")[2].strip())
                 value = line.split(" ")[-1].strip()
 
-                if element_symbol == "v":
-                    self.__voltage_sources.append(
-                        self.__supported_elements(element_symbol=element_symbol)(
-                            start_node=start_node, end_node=end_node, value=value
-                        )
+                self._elements.get(element_symbol).append(
+                    self.__supported_elements(element_symbol=element_symbol)(
+                        start_node=start_node, end_node=end_node, value=value
                     )
-
-                if element_symbol == "i":
-                    self.__current_sources.append(
-                        self.__supported_elements(element_symbol=element_symbol)(
-                            start_node=start_node, end_node=end_node, value=value,
-                        )
-                    )
-                if element_symbol == "r":
-                    self.__resistors.append(
-                        self.__supported_elements(element_symbol=element_symbol)(
-                            start_node=start_node, end_node=end_node, value=value,
-                        )
-                    )
-                if element_symbol == "c":
-                    self.__capacitors.append(
-                        self.__supported_elements(element_symbol=element_symbol)(
-                            start_node=start_node, end_node=end_node, value=value,
-                        )
-                    )
-                if element_symbol == "l":
-                    self.__inductors.append(
-                        self.__supported_elements(element_symbol=element_symbol)(
-                            start_node=start_node, end_node=end_node, value=value,
-                        )
-                    )
-
-            self.elements = self.__get_branches()
-            self.branches = self.elements
+                )
+            self.branches = self._elements
 
         except Exception as e:
             self._is_parsed = False
@@ -129,38 +97,38 @@ class Netlist(object):
           List[LinearElement]: A list of the linear Elements discovered
       """
         return (
-            self.__current_sources
-            + self.__voltage_sources
-            + self.__inductors
-            + self.__capacitors
-            + self.__resistors
+            self._elements.get("i")
+            + self._elements.get("v")
+            + self._elements.get("r")
+            + self._elements.get("c")
+            + self._elements.get("l")
         )
 
     def get_sources(self):
         if self._netlist_lines:
-            return self.__voltage_sources + self.__current_sources
+            return self.get_voltage_source() + self.get_current_source()
 
     def get_voltage_source(self):
-        return self.__voltage_sources
+        return self._elements.get("v")
 
     def get_current_source(self):
-        return self.__current_sources
+        return self._elements.get("i")
 
     def get_parallel_nodes(self):
-        nodes_count = len(self.__get_branches())
         element_nodes = [
-            (element.start_node, element.end_node) for element in self.elements
+            (element.start_node, element.end_node) for element in self.__get_branches()
         ]
-        distinct_element_nodes = set(element_nodes)
-        series_element_nodes = distinct_element_nodes
+        distinct_element_nodes = Counter(element_nodes)
+        self._series_element_nodes = list(distinct_element_nodes.keys())
 
-        counted_connected_nodes = Counter(element_nodes)
-        parallel_element_nodes = [
+        counted_connected_nodes = distinct_element_nodes
+        self._parallel_element_nodes = [
             node for node, count in counted_connected_nodes.items() if count > 1
         ]
-        print(f"{distinct_element_nodes=}")
-        print(f"{series_element_nodes=}")
-        print(f"{counted_connected_nodes=}")
-        print(f"{parallel_element_nodes=}")
 
-        return parallel_element_nodes
+        print(f"{distinct_element_nodes=}")
+        print(f"{self._series_element_nodes=}")
+        print(f"{counted_connected_nodes=}")
+        print(f"{self._parallel_element_nodes=}")
+
+        return self._parallel_element_nodes
