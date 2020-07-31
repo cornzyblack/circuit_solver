@@ -211,7 +211,7 @@ class Resistor(LinearElement):
             current=equivalent_current,
         )
 
-    def __truediv__(self, parallel_resistor: Resistor) -> Resistor:
+    def __or__(self, parallel_resistor: Resistor) -> Resistor:
         """
         Args:
             parallel_resistor (Resistor): The resistor in Parallel
@@ -238,9 +238,6 @@ class Resistor(LinearElement):
             voltage=equivalent_voltage,
             current=equivalent_current,
         )
-
-    def __floordiv__(self, parallel_resistor: Resistor) -> Resistor:
-        return self.__truediv__(parallel_resistor)
 
     def __radd__(self, other_resistor):
         if other_resistor == 0:
