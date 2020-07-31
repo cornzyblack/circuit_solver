@@ -24,51 +24,53 @@ class Netlist(object):
             with open(file_path, "r") as f:
                 self._netlist_lines = f.readlines()[1:-1]
 
-            self.voltage_sources = [
-                VoltageSource(
-                    line.split(" ")[-1].strip(),
-                    int(line.split(" ")[1].strip()),
-                    int(line.split(" ")[2].strip()),
-                )
-                for line in self._netlist_lines
-                if line[0].lower() == "v"
-            ]
-            self.current_sources = [
-                CurrentSource(
-                    line.split(" ")[-1].strip(),
-                    int(line.split(" ")[1].strip()),
-                    int(line.split(" ")[2].strip()),
-                )
-                for line in self._netlist_lines
-                if line[0].lower() == "i"
-            ]
-            self.resistors = [
-                Resistor(
-                    line.split(" ")[-1].strip(),
-                    int(line.split(" ")[1].strip()),
-                    int(line.split(" ")[2].strip()),
-                )
-                for line in self._netlist_lines
-                if line[0].lower() == "r"
-            ]
-            self.capacitors = [
-                Capacitor(
-                    line.split(" ")[-1].strip(),
-                    int(line.split(" ")[1].strip()),
-                    int(line.split(" ")[2].strip()),
-                )
-                for line in self._netlist_lines
-                if line[0].lower() == "c"
-            ]
-            self.inductors = [
-                Capacitor(
-                    line.split(" ")[-1].strip(),
-                    int(line.split(" ")[1].strip()),
-                    int(line.split(" ")[2].strip()),
-                )
-                for line in self._netlist_lines
-                if line[0].lower() == "l"
-            ]
+            self.voltage_sources = []
+            self.current_sources = []
+            self.resistors = []
+            sel.capacitors = []
+            self.inductors = []
+            for line in self._netlist_lines:
+                if line[0].lower() == "v":
+                    self.voltage_sources.append(
+                        VoltageSource(
+                            line.split(" ")[-1].strip(),
+                            int(line.split(" ")[1].strip()),
+                            int(line.split(" ")[2].strip()),
+                        )
+                    )
+                if line[0].lower() == "i":
+                    self.current_sources.append(
+                        CurrentSource(
+                            line.split(" ")[-1].strip(),
+                            int(line.split(" ")[1].strip()),
+                            int(line.split(" ")[2].strip()),
+                        )
+                    )
+                if line[0].lower() == "r":
+                    self.resistors.append(
+                        Resistor(
+                            line.split(" ")[-1].strip(),
+                            int(line.split(" ")[1].strip()),
+                            int(line.split(" ")[2].strip()),
+                        )
+                    )
+                if line[0].lower() == "c":
+                    self.capacitors.append(
+                        Capacitor(
+                            line.split(" ")[-1].strip(),
+                            int(line.split(" ")[1].strip()),
+                            int(line.split(" ")[2].strip()),
+                        )
+                    )
+                if line[0].lower() == "l":
+
+                    self.inductors.append(
+                        Capacitor(
+                            line.split(" ")[-1].strip(),
+                            int(line.split(" ")[1].strip()),
+                            int(line.split(" ")[2].strip()),
+                        )
+                    )
 
             self.elements = self.__get_branches()
             self.branches = self.elements
