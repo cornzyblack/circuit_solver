@@ -12,6 +12,8 @@ from src.components import (
 import re
 from pathlib import Path
 from collections import Counter
+from itertools import accumulate
+from operator import __or__, __add__
 
 
 class Netlist(object):
@@ -46,6 +48,7 @@ class Netlist(object):
                     )
                 )
             self.branches = self._elements
+            self.parallel_nodes = self.get_parallel_nodes()
 
         except Exception as e:
             self._is_parsed = False
@@ -129,6 +132,33 @@ class Netlist(object):
             Optional[List]: A list of current sources
         """
         return self._elements.get("i")
+
+    def get_series_resistors(self):
+        self._elements.get("r")
+
+    def get_parallel_resistors(self):
+        self._elements.get("r")
+
+    def calculate_effective_resistance(self, explain: bool = False):
+        parallel_resistors = self.get_parallel_resistors()
+        series_resistors = self.get_series_resistors()
+
+        effective_resistance = []
+        eq_series_resistor = None
+        eq_parallel_resistor = None
+
+        if series_resistors:
+            eq_series_resistor = accumulate(series_resistors)
+            effective_resistance.append(eq_series_resistor[-1])
+        if parallel_resistors:
+            eq_parallel_resistor = accumulate(parallel_resistors, func=__or__)
+            effective_resistance.append(eq_parallel_resistor[-1])
+
+        return {
+            "effective_resistance": sum(effective_resistance),
+            "effective_series_resistors": eq_series_resistor,
+            "effective_parallel_resistors": eq_parallel_resistor,
+        }
 
     def get_parallel_nodes(self):
         """Returns a list of nodes in parallel found in the Netlist
