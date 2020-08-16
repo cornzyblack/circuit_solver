@@ -20,7 +20,6 @@ from operator import __or__, __add__
 class Netlist(object):
     """ This is a netlist object that parses a Netlist file
     Parameters:
-        file_path (Path): The path of the file on the system
         components_dict (Dict): The dictionary containing the components
 
     Attributes:
@@ -32,44 +31,52 @@ class Netlist(object):
         capacitors: the capacitors detected from the Netlist file
     """
 
-    def __init__(self, file_path: Optional[Path] = None, components_dict : Optional[dict] = None):
+    def __init__(self, components_dict: Optional[dict]):
         self._is_parsed = True
         try:
-            if not (file_path or components_dict):
-                raise ErrorParsing()
-
-            if file_path:
-                with open(file_path, "r") as f:
-                    self._netlist_lines = f.readlines()[1:-1]
-
-                self._elements = {"v": [], "l": [], "r": [], "i": [], "c": []}
-
-                for line in self._netlist_lines:
-                    element_symbol = line[0].lower()
-                    start_node = int(line.split(" ")[1].strip())
-                    end_node = int(line.split(" ")[2].strip())
-                    value = line.split(" ")[-1].strip()
-
-                    self._elements.get(element_symbol).append(
-                        self.__supported_elements(element_symbol=element_symbol)(
-                            start_node=start_node, end_node=end_node, value=value
-                        )
-                    )
-
-            elif components_dict:
-                self._elements = components_dict
-
-
+            self._elements = components_dict
             self.branches = self._elements
             self.parallel_nodes = self.get_parallel_nodes()
 
         except Exception as e:
             self._is_parsed = False
+            print(f"Issue parsing Netlist file")
+
+    @classmethod
+    def read_netlist_file(cls, file_path: Path):
+        """ This is a netlist reader method that parses a Netlist file
+        Parameters:
+            file_path (Dict): The dictionary containing the components
+        """
+        if not (file_path):
+            raise ErrorParsing()
+        _elements = None
+        try:
+            _elements = {"v": [], "l": [], "r": [], "i": [], "c": []}
+
+            with open(file_path, "r") as f:
+                _netlist_lines = f.readlines()[1:-1]
+
+            for line in _netlist_lines:
+                element_symbol = line[0].lower()
+                start_node = int(line.split(" ")[1].strip())
+                end_node = int(line.split(" ")[2].strip())
+                value = line.split(" ")[-1].strip()
+
+                _elements.get(element_symbol).append(
+                    Netlist.get_supported_elements(element_symbol=element_symbol)(
+                        start_node=start_node, end_node=end_node, value=value
+                    )
+                )
+
+        except Exception as e:
             print(f"Issue parsing Netlist {e}, file could be corrupt")
+
+        return _elements
 
     @classmethod
     def load(cls, netlist_components: dict) -> Netlist:
-        return Netlist(components_dict = netlist_components)
+        return Netlist(components_dict=netlist_components)
 
     @classmethod
     def parse(cls, file_path: Path) -> Netlist:
@@ -80,11 +87,14 @@ class Netlist(object):
         Returns:
             Netlist: the object representation of the parsed Netlist file
         """
-
-        netlist_obj = Netlist(file_path=file_path)
+        _elements = cls.read_netlist_file(file_path)
+        netlist_obj = None
+        if _elements:
+            netlist_obj = Netlist(_elements)
         return netlist_obj
 
-    def __supported_elements(self, element_symbol) -> LinearElement:
+    @classmethod
+    def get_supported_elements(cls, element_symbol) -> LinearElement:
         """Returns the currently supported elements
 
         Parameters:
@@ -130,7 +140,7 @@ class Netlist(object):
         Returns:
             Optional[List]: A list of current and voltage sources
         """
-        if self._netlist_lines:
+        if self._is_parsed:
             return self.get_voltage_sources() + self.get_current_sources()
 
     def get_voltage_sources(self):
@@ -184,7 +194,7 @@ class Netlist(object):
             "effective_resistance": sum(effective_resistance),
             "effective_series_resistors": eq_series_resistor,
             "effective_parallel_resistors": eq_parallel_resistor,
-            "effective_netlist_obj":
+            # "effective_netlist_obj":
         }
 
     def get_parallel_nodes(self):
