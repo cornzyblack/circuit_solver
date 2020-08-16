@@ -2,6 +2,14 @@ class BaseError(Exception):
     pass
 
 
+class ErrorParsing(BaseError):
+    def __init__(self):
+        self.message = "Could not parse, please supply a path or a Dictionary containing components"
+
+    def __str__(self):
+        return self.message
+
+
 class NotALoopError(BaseError):
     """Exception raised when the connected components do not constitute a valid loop.
     A valid Loop is one starts from a source and ends back at that source. In general,
@@ -25,7 +33,7 @@ class NotInSeries(BaseError):
 
     def __init__(self, resistor_a, resistor_b):
         self.resistor_a = resistor_a
-        self.resistor_b = resistor_b
+        self.resistor_b = resistor_
 
     def __str__(self):
         return f"The Resistors {self.resistor_a}, {self.resistor_b} are not in Series"
