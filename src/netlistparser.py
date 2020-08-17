@@ -10,10 +10,11 @@ from src.components import (
     CurrentSource,
 )
 from src.errors import ErrorParsing
+import networkx as nx
 import re
 from pathlib import Path
 from collections import Counter
-from itertools import accumulate
+from itertools import accumulate, groupby
 from operator import __or__, __add__
 
 
@@ -21,6 +22,7 @@ class Netlist(object):
     """ This is a netlist object that parses a Netlist file
     Parameters:
         components_dict (Dict): The dictionary containing the components
+        explanatory_parts (Optional[Dict[str, List[str]]]): A dict of texts explaining the necessary steps of the current state
 
     Attributes:
         elements: the elements/components detected from the Netlist file
@@ -31,12 +33,20 @@ class Netlist(object):
         capacitors: the capacitors detected from the Netlist file
     """
 
-    def __init__(self, components_dict: Optional[dict]):
+    def __init__(
+        self,
+        components_dict: Optional[dict],
+        explanatory_parts: Optional[Dict[str, List[str]]] = None,
+    ):
         self._is_parsed = True
         try:
             self._elements = components_dict
             self.branches = self._elements
-            self.parallel_nodes = self.get_parallel_nodes()
+            (
+                self._floating_element_nodes,
+                self._parallel_element_nodes,
+            ) = self.get_element_connection_nodes()
+            self.explanatory_parts = explanatory_parts
 
         except Exception as e:
             self._is_parsed = False
@@ -160,58 +170,128 @@ class Netlist(object):
         """
         return self._elements.get("i")
 
-    def get_series_resistors(self):
-        self._elements.get("r")
+    def get_combination_resistors(self):
+        series_nodes, parallel_nodes = self.get_element_connection_nodes()
 
-    def get_parallel_resistors(self):
-        self._elements.get("r")
+        parallel_resistors = {}
+        series_resistors = []
+        temp_floating_resistors = []
 
-    @staticmethod
-    def calculate_recursive(resistor_list):
-        # if len(resistor_list) != 1:
-        pass
+        floating_resistors = []
 
-    def calculate_effective_resistance(self, explain: bool = False):
-        parallel_resistors = self.get_parallel_resistors()
-        series_resistors = self.get_series_resistors()
+        for resistor in self._elements.get("r"):
+            node = (resistor.start_node, resistor.end_node)
+            if node in series_nodes:
+                temp_floating_resistors.append(resistor)
 
-        effective_resistance = []
-        eq_series_resistor = None
-        eq_parallel_resistor = None
-        explanation_text = ""
+            if node in parallel_nodes:
+                if node in parallel_resistors:
+                    parallel_resistors[node].append(resistor)
+                else:
+                    parallel_resistors[node] = [resistor]
+        floating_resistors_edges = [
+            (resistor.start_node, resistor.end_node)
+            for resistor in temp_floating_resistors
+        ]
 
-        if series_resistors:
-            eq_series_resistor = accumulate(series_resistors)
-            effective_resistance.append(eq_series_resistor[-1])
-        if parallel_resistors:
-            eq_parallel_resistor = accumulate(parallel_resistors, func=__or__)
-            effective_resistance.append(eq_parallel_resistor[-1])
+        G = nx.from_edgelist(floating_resistors_edges)
+        l = list(nx.connected_components(G))
+        print(l)
 
-        if explain:
-            pass
+        series_nodes = set.union(*[set(), *filter(lambda x: len(x) > 2, l)])
+        floating_nodes = set.union(*[set(), *filter(lambda x: len(x) <= 2, l)])
 
-        return {
-            "effective_resistance": sum(effective_resistance),
-            "effective_series_resistors": eq_series_resistor,
-            "effective_parallel_resistors": eq_parallel_resistor,
-            # "effective_netlist_obj":
-        }
+        for resistor in temp_floating_resistors:
+            if resistor.start_node in series_nodes or resistor.end_node in series_nodes:
+                series_resistors.append(resistor)
+            if (
+                resistor.start_node in floating_nodes
+                or resistor.end_node in floating_nodes
+            ):
+                floating_resistors.append(resistor)
 
-    def get_parallel_nodes(self):
-        """Returns a list of nodes in parallel found in the Netlist
+        return series_resistors, parallel_resistors, floating_resistors
+
+    @classmethod
+    def calculate_effective_resistance(cls, netlist_obj: Netlist):
+        result = None
+
+        if len(netlist_obj._elements.get("r")) == 1:
+            result = netlist_obj
+
+        else:
+            (
+                series_resistors,
+                parallel_resistors,
+                floating_resistors,
+            ) = netlist_obj.get_combination_resistors()
+
+            effective_resistance = []
+            eq_series_resistor = None
+            eq_parallel_resistor = None
+
+            voltage_sources = netlist_obj.get_voltage_sources()
+            current_sources = netlist_obj.get_current_sources()
+
+            if parallel_resistors:
+                print(f"{parallel_resistors=}")
+                for node in parallel_resistors:
+                    eq_parallel_resistor = list(
+                        accumulate(parallel_resistors[node], func=__or__)
+                    )
+                    effective_resistance.append(eq_parallel_resistor[-1])
+                    parallel_explanation_text = ""
+
+            if series_resistors:
+                print(f"{series_resistors=}")
+                eq_series_resistor = list(accumulate(series_resistors))
+                series_explanation_text = ""
+                effective_resistance.append(eq_series_resistor[-1])
+
+            effective_resistance.extend(floating_resistors)
+            components = {
+                "v": voltage_sources,
+                "l": [],
+                "r": effective_resistance,
+                "i": current_sources,
+                "c": [],
+            }
+
+            simplified_netlist = Netlist(components_dict=components)
+            return Netlist.calculate_effective_resistance(simplified_netlist)
+
+        return result
+
+    def get_element_connection_nodes(self):
+        """Returns a list of nodes in parallel, series found in the Netlist
 
         Returns:
             Optional[List]: A list of nodes in parallel
         """
-        element_nodes = [
-            (element.start_node, element.end_node) for element in self.__get_branches()
-        ]
-        distinct_element_nodes = Counter(element_nodes)
-        self._series_element_nodes = list(distinct_element_nodes.keys())
+        parallel_element_nodes = []
+        floating_element_nodes = []
 
-        counted_connected_nodes = distinct_element_nodes
-        self._parallel_element_nodes = [
-            node for node, count in counted_connected_nodes.items() if count > 1
-        ]
+        try:
+            element_nodes = [
+                (element.start_node, element.end_node)
+                for element in self.__get_branches()
+            ]
+            distinct_element_nodes = Counter(element_nodes)
+            counted_connected_nodes = distinct_element_nodes
 
-        return self._parallel_element_nodes
+            for node, count in counted_connected_nodes.items():
+                if count > 1:
+                    parallel_element_nodes.append(node)
+                else:
+                    floating_element_nodes.append(node)
+
+            self._floating_element_nodes = floating_element_nodes
+            self._parallel_element_nodes = parallel_element_nodes
+
+        except Exception as e:
+            print(e)
+
+        return (
+            self._floating_element_nodes,
+            self._parallel_element_nodes,
+        )
