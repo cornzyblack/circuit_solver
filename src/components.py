@@ -111,6 +111,11 @@ class LinearElement(BaseElement):
             raise errors.SameNodeError()
 
         self.start_node, self.end_node = sorted((int(start_node), int(end_node)))
+        if int(end_node) == 0:
+            self.start_node, self.end_node = (int(start_node), int(end_node))
+        else:
+            self.start_node, self.end_node = sorted((int(start_node), int(end_node)))
+
         self.tag = element_tag + "_" + str(self.start_node) + str(self.end_node)
         self.prefix = None
         self.voltage = voltage
@@ -193,11 +198,11 @@ class Resistor(LinearElement):
             Resistor: A resistor with the equivalent Resistance of the combined
             seried resistors
         """
-        # if not (
-        #     abs(self.end_node - self.start_node)
-        #     == abs(series_resistor.end_node - series_resistor.start_node)
-        # ):
-        #     raise errors.NotInSeries(self.tag, series_resistor.tag)
+        if not (
+            (series_resistor.end_node == self.start_node)
+            or (self.end_node == series_resistor.start_node)
+        ):
+            raise errors.NotInSeries(self.tag, series_resistor.tag)
 
         equivalent_resistance_value = self.value + series_resistor.value
         equivalent_voltage = None
