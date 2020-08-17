@@ -1,14 +1,19 @@
 import json
 import pytest
 
-from src import errors
 from src.components import Resistor
+from src import errors
 
 
 class TestResistorComponent:
     def test_create_resistor_1(self):
         resistor = Resistor("1.50", 1, 0)
-        assert resistor.start_node == 0, "The start node for this resistor should be 0"
+        assert resistor.start_node == 1, "The start node for this resistor should be 0"
+        assert resistor.end_node == 0, "The end node for this resistor should be 0"
+
+    def test_create_resistor_2(self):
+        resistor = Resistor("1.50", 0, 1)
+        assert resistor.start_node == 0, "The start node for this resistor should be 1"
         assert resistor.end_node == 1, "The end node for this resistor should be 0"
 
     def test_get_resistor_value_1(self):
