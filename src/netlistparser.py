@@ -210,6 +210,13 @@ class Netlist(object):
             ):
                 floating_resistors.append(resistor)
 
+        series_resistors = sorted(
+            series_resistors,
+            key=lambda resistor: (
+                resistor.start_node * abs(resistor.end_node - resistor.start_node)
+            ),
+            reverse=True,
+        )
         return series_resistors, parallel_resistors, floating_resistors
 
     @classmethod
@@ -234,7 +241,7 @@ class Netlist(object):
             current_sources = netlist_obj.get_current_sources()
 
             if parallel_resistors:
-                print(f"{parallel_resistors=}")
+                # print(f"{parallel_resistors=}")
                 for node in parallel_resistors:
                     eq_parallel_resistor = list(
                         accumulate(parallel_resistors[node], func=__or__)
@@ -243,7 +250,7 @@ class Netlist(object):
                     parallel_explanation_text = ""
 
             if series_resistors:
-                print(f"{series_resistors=}")
+                # print(f"{series_resistors=}")
                 eq_series_resistor = list(accumulate(series_resistors))
                 series_explanation_text = ""
                 effective_resistance.append(eq_series_resistor[-1])
@@ -259,6 +266,7 @@ class Netlist(object):
 
             simplified_netlist = Netlist(components_dict=components)
             return Netlist.calculate_effective_resistance(simplified_netlist)
+            breakpoint()
 
         return result
 
