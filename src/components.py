@@ -193,11 +193,11 @@ class Resistor(LinearElement):
             Resistor: A resistor with the equivalent Resistance of the combined
             seried resistors
         """
-        if not (
-            abs(self.end_node - self.start_node)
-            == abs(series_resistor.end_node - series_resistor.start_node)
-        ):
-            raise errors.NotInSeries(self.tag, series_resistor.tag)
+        # if not (
+        #     abs(self.end_node - self.start_node)
+        #     == abs(series_resistor.end_node - series_resistor.start_node)
+        # ):
+        #     raise errors.NotInSeries(self.tag, series_resistor.tag)
 
         equivalent_resistance_value = self.value + series_resistor.value
         equivalent_voltage = None
