@@ -196,7 +196,7 @@ class Netlist(object):
 
         G = nx.from_edgelist(floating_resistors_edges)
         l = list(nx.connected_components(G))
-        print(l)
+        # print(l)
 
         series_nodes = set.union(*[set(), *filter(lambda x: len(x) > 2, l)])
         floating_nodes = set.union(*[set(), *filter(lambda x: len(x) <= 2, l)])
@@ -266,7 +266,6 @@ class Netlist(object):
 
             simplified_netlist = Netlist(components_dict=components)
             return Netlist.calculate_effective_resistance(simplified_netlist)
-            breakpoint()
 
         return result
 
