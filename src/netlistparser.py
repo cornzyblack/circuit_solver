@@ -14,7 +14,8 @@ import networkx as nx
 import re
 from pathlib import Path
 from collections import Counter
-from itertools import accumulate, groupby
+from itertools import groupby
+from functools import reduce
 from operator import __or__, __add__
 
 
@@ -36,7 +37,7 @@ class Netlist(object):
     def __init__(
         self,
         components_dict: Optional[dict],
-        explanatory_parts: Optional[Dict[str, List[str]]] = None,
+        explanatory_parts: Optional[Dict[str, List[str]]] = [],
     ):
         self._is_parsed = True
         try:
@@ -47,7 +48,7 @@ class Netlist(object):
                 self._parallel_element_nodes,
             ) = self.get_element_connection_nodes()
             self.explanatory_parts = explanatory_parts
-
+            self.is_reduced = False
         except Exception as e:
             self._is_parsed = False
             print(f"Issue parsing Netlist file")
@@ -236,25 +237,28 @@ class Netlist(object):
             effective_resistance = []
             eq_series_resistor = None
             eq_parallel_resistor = None
-
+            explanatory_parts = netlist_obj.explanatory_parts
             voltage_sources = netlist_obj.get_voltage_sources()
             current_sources = netlist_obj.get_current_sources()
 
             if parallel_resistors:
-                # print(f"{parallel_resistors=}")
                 for node in parallel_resistors:
-                    eq_parallel_resistor = list(
-                        accumulate(parallel_resistors[node], func=__or__)
+                    eq_parallel_resistor = reduce(
+                        lambda x, y: x | y, parallel_resistors[node]
                     )
-                    effective_resistance.append(eq_parallel_resistor[-1])
-                    parallel_explanation_text = ""
+                    effective_resistance.append(eq_parallel_resistor)
 
             if series_resistors:
-                # print(f"{series_resistors=}")
-                eq_series_resistor = list(accumulate(series_resistors))
-                series_explanation_text = ""
-                effective_resistance.append(eq_series_resistor[-1])
-
+                eq_series_resistor = reduce(lambda x, y: x + y, series_resistors)
+                effective_resistance.append(eq_series_resistor)
+            explanatory_parts.append(
+                {
+                    "series_resistors": series_resistors,
+                    "parallel_resistors": parallel_resistors,
+                    "series_accumulation": eq_series_resistor,
+                    "parallel_accumulation": eq_parallel_resistor,
+                }
+            )
             effective_resistance.extend(floating_resistors)
             components = {
                 "v": voltage_sources,
@@ -264,10 +268,53 @@ class Netlist(object):
                 "c": [],
             }
 
-            simplified_netlist = Netlist(components_dict=components)
+            simplified_netlist = Netlist(
+                components_dict=components, explanatory_parts=explanatory_parts
+            )
             return Netlist.calculate_effective_resistance(simplified_netlist)
-
         return result
+
+    def get_explanation(self):
+        explanatory_text = ""
+        series_explanation = ""
+        parallel_explanation = ""
+        reversed_explanation_part = self.explanatory_parts[::-1]
+
+        for explanation_part in reversed_explanation_part:
+            if explanation_part["series_resistors"]:
+                series_explanation = " ".join(
+                    list(
+                        map(
+                            lambda resistor: f"{resistor.tag} ({resistor.value}{resistor.symbol})",
+                            explanation_part["series_resistors"][::-1],
+                        )
+                    )
+                )
+
+                series_explanation = (
+                    "\nThe following resistors are in Series: "
+                    + series_explanation
+                    + "\n"
+                )
+            if explanation_part["parallel_resistors"]:
+                print({explanation_part["parallel_resistors"]})
+                par_r = explanation_part["parallel_resistors"].values()[::-1]
+                print(f"{par_r=}")
+                parallel_explanation = " ".join(
+                    list(
+                        map(
+                            lambda resistor: f"{resistor.tag} ({resistor.value}{resistor.symbol})",
+                            par_r,
+                        )
+                    )
+                )
+                parallel_explanation = (
+                    "\nThe following resistors are in Parallel: "
+                    + parallel_explanation
+                    + "\n"
+                )
+        explanatory_text = series_explanation + parallel_explanation
+        return explanatory_text
 
     def get_element_connection_nodes(self):
         """Returns a list of nodes in parallel, series found in the Netlist
