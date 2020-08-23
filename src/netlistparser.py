@@ -279,64 +279,65 @@ class Netlist(object):
         series_explanation = ""
         parallel_explanation = ""
         reversed_explanation_part = self.explanatory_parts[::-1]
-
-        for explanation_part in reversed_explanation_part:
-            if explanation_part["series_resistors"]:
-                series_explanation = " ".join(
-                    map(
-                        lambda resistor: f"{resistor.tag} ({resistor.value}{resistor.symbol})",
-                        explanation_part["series_resistors"][::-1],
+        if reversed_explanation_part:
+            for explanation_part in reversed_explanation_part:
+                if explanation_part["series_resistors"]:
+                    series_explanation = " ".join(
+                        map(
+                            lambda resistor: f"{resistor.tag} ({resistor.value}{resistor.symbol})",
+                            explanation_part["series_resistors"][::-1],
+                        )
                     )
-                )
-                series_explanation_1 = " + ".join(
-                    map(
-                        lambda resistor: f" ({resistor.value}{resistor.symbol}) ",
-                        explanation_part["series_resistors"][::-1],
+                    series_explanation_1 = " + ".join(
+                        map(
+                            lambda resistor: f" ({resistor.value}{resistor.symbol}),",
+                            explanation_part["series_resistors"][::-1],
+                        )
                     )
-                )
-                series_accumulation = explanation_part["series_accumulation"]
-                series_explanation = (
-                    "\nThe following resistors are in Series: "
-                    + series_explanation
-                    + "\n( "
-                    + series_explanation_1
-                    + " ) "
-                    + f" = {series_accumulation.value}{series_accumulation.symbol}"
-                    + "\n"
-                )
-
-            if len(explanation_part["parallel_resistors"]) > 0:
-                print(explanation_part["parallel_resistors"])
-                par_r = reduce(
-                    lambda x, y: x + y, explanation_part["parallel_resistors"].values(),
-                )[::-1]
-
-                parallel_explanation = " ".join(
-                    map(
-                        lambda resistor: f"{resistor.tag} ({resistor.value}{resistor.symbol})",
-                        par_r,
+                    series_accumulation = explanation_part["series_accumulation"]
+                    series_explanation = (
+                        "\nThe following resistors are in Series: "
+                        + series_explanation
+                        + "\n( "
+                        + series_explanation_1
+                        + " ) "
+                        + f" = {series_accumulation.value}{series_accumulation.symbol}"
+                        + "\n"
                     )
-                )
-                parallel_explanation_1 = " + ".join(
-                    map(
-                        lambda resistor: f" 1/({resistor.value}{resistor.symbol}) ",
-                        par_r,
+
+                if len(explanation_part["parallel_resistors"]) > 0:
+                    print(explanation_part["parallel_resistors"])
+                    parallel_resistors = reduce(
+                        lambda x, y: x + y,
+                        explanation_part["parallel_resistors"].values(),
+                    )[::-1]
+
+                    parallel_explanation = " ".join(
+                        map(
+                            lambda resistor: f"{resistor.tag} ({resistor.value}{resistor.symbol}),",
+                            parallel_resistors,
+                        )
                     )
-                )
-                parallel_accumulation = explanation_part["parallel_accumulation"]
+                    parallel_explanation_1 = " + ".join(
+                        map(
+                            lambda resistor: f" 1/({resistor.value}{resistor.symbol}) ",
+                            parallel_resistors,
+                        )
+                    )
+                    parallel_accumulation = explanation_part["parallel_accumulation"]
 
-                parallel_explanation = (
-                    "\nThe following resistors are in Parallel: "
-                    + parallel_explanation
-                    + "\n1 /"
-                    + "("
-                    + parallel_explanation_1
-                    + ")"
-                    + f" = {parallel_accumulation.value}{parallel_accumulation.symbol}"
-                    + "\n"
-                )
+                    parallel_explanation = (
+                        "\nThe following resistors are in Parallel: "
+                        + parallel_explanation
+                        + "\n1 /"
+                        + "("
+                        + parallel_explanation_1
+                        + ")"
+                        + f" = {parallel_accumulation.value}{parallel_accumulation.symbol}"
+                        + "\n"
+                    )
 
-        explanatory_text = series_explanation + parallel_explanation
+            explanatory_text = series_explanation + parallel_explanation
         return explanatory_text
 
     def get_element_connection_nodes(self):

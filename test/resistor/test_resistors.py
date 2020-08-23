@@ -25,7 +25,7 @@ class TestResistorComponent:
         assert resistor.value == 0.0000105, "The resistance value should be 0.0000105"
 
     def test_get_resistor_value_3(self):
-        resistor = Resistor("10.5Ω", 5, 4)
+        resistor = Resistor("10.5exit", 5, 4)
         assert resistor.value == 10.5, "The resistance value should be 10.5"
 
     def test_get_resistor_value_4(self):
